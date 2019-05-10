@@ -11,7 +11,7 @@
           latitude = pos.coords.latitude;
           longitude = pos.coords.longitude;
         
-          navigator.geolocation.clearWatch(id);
+          createMap();
       }
       
       function error(err) {
@@ -26,20 +26,27 @@
 
         
       function initMap() {
-        var id = navigator.geolocation.watchPosition(success, error, options);
-        map = new google.maps.Map(document.getElementById('map'), {
-            center: {lat: latitude, lng: longitude},
-            zoom: 11
-        });
-          
-        console.log(latitude);
+        navigator.geolocation.getCurrentPosition(success, error, options);
+      }
+        
+      function createMap(){
+          map = new google.maps.Map(document.getElementById('map'), {
+                center: {lat: latitude, lng: longitude},
+                zoom: 11
+          });
+          console.log(latitude);
+
+          var endpoint = "https://data.cityofchicago.org/resource/9rg7-mz9y.json?";
+
+          $.get(endpoint, function(response) {
+            var data = response;
+            createMarkers(data);
+          });
       }
         
       function createMarkers (data) {
         $.each(data, function(i,v) {
-            
-          console.log(data);
-         
+                     
           var location = {lat: parseFloat(v.latitude), lng: parseFloat(v.longitude)};
           console.log(location);
           var marker = new google.maps.Marker({position: location, map: map});
@@ -55,22 +62,8 @@
           });
         });
       }
-    </script>
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDa4dMSOASs_iLQnhrPoQ8EZgj2Im_pZ7o&callback=initMap"></script>
     
-    <script>
-	$(document).ready(function(){
-            var endpoint = "https://data.cityofchicago.org/resource/9rg7-mz9y.json?";
-
-            //var map = initMap();
-             
-            $.get(endpoint, function(response) {
-                  var data = response;
-                  createMarkers(data);
-            });
-    });
-        
-    function distance(lat1, lon1, lat2, lon2) {
+      function distance(lat1, lon1, lat2, lon2) {
         if ((lat1 == lat2) && (lon1 == lon2)) {
             return 0;
         }
@@ -88,6 +81,7 @@
             dist = dist * 60 * 1.1515;
             return dist;
 	    }
-    }
+      }
     </script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDa4dMSOASs_iLQnhrPoQ8EZgj2Im_pZ7o&callback=initMap"></script>
 

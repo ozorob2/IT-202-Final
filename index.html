@@ -12,8 +12,7 @@
 	<link rel="stylesheet" href="https://unpkg.com/material-components-web@0.40.0/dist/material-components-web.min.css" />
 	<link href="style.css" rel="stylesheet" type="text/css" />
 	<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
-
-  <style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>  <style>
     #map {
         height: 400px;  /* The height is 400 pixels */
         width: 100%;  /* The width is the width of the web page */
@@ -32,62 +31,90 @@
 </head>
 
 <body>
-	<!-- top nav bar -->
-	<header class="mdc-top-app-bar">
-		<div class="mdc-top-app-bar__row">
-			<section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
-				<a href="#" class="material-icons mdc-top-app-bar__navigation-icon">menu</a>
-				<span class="mdc-top-app-bar__title">IT 202 Final Exam</span>
-			</section>
-		</div>
-	</header>
+    <style>#map {height: 500px;} </style>
+  
+    <div id="map"></map>
+	<script>
+        
+      var map;
+      // default location
+      var latitude = 41.8781, longitude = -87.6298, id;
+      function success(pos) {
+          latitude = pos.coords.latitude;
+          longitude = pos.coords.longitude;
+        
+          createMap();
+      }
+      
+      function error(err) {
+          console.warn('ERROR(' + err.code + '): ' + err.message);
+      }
+        
+      options = {
+          enableHighAccuracy: false,
+          timeout: 5000,
+          maximumAge: 0
+      };
 
-	<!-- the navigation drawer -->
-	<aside class="mdc-drawer mdc-drawer--modal" data-mdc-auto-init="MDCDrawer">
-		<div class="mdc-drawer__header">
-			<h3 class="mdc-drawer__title">Mail</h3>
-			<h6 class="mdc-drawer__subtitle">email@material.io</h6>
-		</div>
-		<div class="mdc-drawer__content">
-			<nav class="mdc-list">
-				<a data-screen="home" class="mdc-list-item mdc-list-item--activated" href="#" tabindex="0" aria-selected="true"><i class="material-icons mdc-list-item__graphic" aria-hidden="true">home</i>Home</a>
-				
-			</nav>
-		</div>
-	</aside>
-	
-  
-  <div class="mdc-drawer-scrim"></div>
-	<div id="contentArea">
-    <div class="mdc-top-app-bar--fixed-adjust"></div>
-    <div id="content" class="mdc-typography--body1"></div>
-  </div>
-	
-  
-  
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-	<script src="https://unpkg.com/material-components-web@0.40.0/dist/material-components-web.min.js"></script>
-	<script src="script.js"></script>
-  
-  
-  <!-- putting the Google library scripts at the top level due to use across screens -->
-  
-  <script src="https://apis.google.com/js/platform.js"></script>
-  
-  <script src="https://apis.google.com/js/api.js"></script>
+        
+      function initMap() {
+        navigator.geolocation.getCurrentPosition(success, error, options);
+      }
+        
+      function createMap(){
+          map = new google.maps.Map(document.getElementById('map'), {
+                center: {lat: latitude, lng: longitude},
+                zoom: 11
+          });
+          console.log(latitude);
 
-  <script>
-  	if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js')
-  .then(function(reg) {
-    // registration worked
-    console.log('Registration succeeded. Scope is ' + reg.scope);
-  }).catch(function(error) {
-    // registration failed
-    console.log('Registration failed with ' + error);
-  });
-}
-  </script>
+          var endpoint = "https://data.cityofchicago.org/resource/9rg7-mz9y.json?";
+
+          $.get(endpoint, function(response) {
+            var data = response;
+            createMarkers(data);
+          });
+      }
+        
+      function createMarkers (data) {
+        $.each(data, function(i,v) {
+                     
+          var location = {lat: parseFloat(v.latitude), lng: parseFloat(v.longitude)};
+          console.log(location);
+          var marker = new google.maps.Marker({position: location, map: map});
+          var content = v.address.bold() + "<br>" + "<br>";
+          content += "Distance to (in miles): " + distance(latitude, longitude, v.latitude, v.longitude);
+            
+          var infowindow = new google.maps.InfoWindow({
+            content: content
+          });
+          marker.addListener('click', function() {
+            infowindow.open(map, marker);
+          });
+        });
+      }
+    
+      function distance(lat1, lon1, lat2, lon2) {
+        if ((lat1 == lat2) && (lon1 == lon2)) {
+            return 0;
+        }
+        else {
+            var radlat1 = Math.PI * lat1/180;
+            var radlat2 = Math.PI * lat2/180;
+            var theta = lon1-lon2;
+            var radtheta = Math.PI * theta/180;
+            var dist = Math.sin(radlat1) * Math.sin(radlat2) + Math.cos(radlat1) * Math.cos(radlat2) * Math.cos(radtheta);
+            if (dist > 1) {
+                dist = 1;
+            }
+            dist = Math.acos(dist);
+            dist = dist * 180/Math.PI;
+            dist = dist * 60 * 1.1515;
+            return dist;
+	    }
+      }
+    </script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDa4dMSOASs_iLQnhrPoQ8EZgj2Im_pZ7o&callback=initMap"></script>
 
 
 </body>
