@@ -1,0 +1,93 @@
+<style>#map {height: 500px;} </style>
+  
+<div id="map"></map>
+
+    <script>
+        
+      var map;
+      // default location
+      var latitude = 41.8781, longitude = -87.6298, id;
+      function success(pos) {
+          latitude = pos.coords.latitude;
+          longitude = pos.coords.longitude;
+        
+          navigator.geolocation.clearWatch(id);
+      }
+      
+      function error(err) {
+          console.warn('ERROR(' + err.code + '): ' + err.message);
+      }
+        
+      options = {
+          enableHighAccuracy: false,
+          timeout: 5000,
+          maximumAge: 0
+      };
+
+        
+      function initMap() {
+        var id = navigator.geolocation.watchPosition(success, error, options);
+        map = new google.maps.Map(document.getElementById('map'), {
+            center: {lat: latitude, lng: longitude},
+            zoom: 11
+        });
+          
+        console.log(latitude);
+      }
+        
+      function createMarkers (data) {
+        $.each(data, function(i,v) {
+            
+          console.log(data);
+         
+          var location = {lat: parseFloat(v.latitude), lng: parseFloat(v.longitude)};
+          console.log(location);
+          var marker = new google.maps.Marker({position: location, map: map});
+          marker.setIcon('https://maps.google.com/mapfiles/ms/icons/blue-dot.png');
+          var content = v.address.bold() + "<br>" + "<br>";
+          content += "Distance to (in miles): " + distance(latitude, longitude, v.latitude, v.longitude);
+            
+          var infowindow = new google.maps.InfoWindow({
+            content: content
+          });
+          marker.addListener('click', function() {
+            infowindow.open(map, marker);
+          });
+        });
+      }
+    </script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDa4dMSOASs_iLQnhrPoQ8EZgj2Im_pZ7o&callback=initMap"></script>
+    
+    <script>
+	$(document).ready(function(){
+            var endpoint = "https://data.cityofchicago.org/resource/9rg7-mz9y.json?";
+
+            //var map = initMap();
+             
+            $.get(endpoint, function(response) {
+                  var data = response;
+                  createMarkers(data);
+            });
+    });
+        
+    function distance(lat1, lon1, lat2, lon2) {
+        if ((lat1 == lat2) && (lon1 == lon2)) {
+            return 0;
+        }
+        else {
+            var radlat1 = Math.PI * lat1/180;
+            var radlat2 = Math.PI * lat2/180;
+            var theta = lon1-lon2;
+            var radtheta = Math.PI * theta/180;
+            var dist = Math.sin(radlat1) * Math.sin(radlat2) + Math.cos(radlat1) * Math.cos(radlat2) * Math.cos(radtheta);
+            if (dist > 1) {
+                dist = 1;
+            }
+            dist = Math.acos(dist);
+            dist = dist * 180/Math.PI;
+            dist = dist * 60 * 1.1515;
+            return dist;
+	    }
+    }
+    </script>
+
